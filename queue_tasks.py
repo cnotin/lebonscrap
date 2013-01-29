@@ -3,11 +3,12 @@ import Queue
 
 class Job():
     def __init__(self, function, arg):
-        self.function=function
-        self.arg=arg
+        self.function = function
+        self.arg = arg
 
     def do(self):
         return self.function(self.arg)
+
 
 class Worker(threading.Thread):
     """Threaded File Downloader"""
@@ -27,22 +28,20 @@ class Worker(threading.Thread):
             self.queue.task_done()
 
 
-class QueueTasks(threading.Thread):
-    def __init__(self, nb_threads=2):
-        threading.Thread.__init__(self)
-
+class QueueTasks():
+    def __init__(self, function, nb_threads=2):
         self.queue = Queue.Queue()
+        self.function = function
 
         #spawn a pool of threads, and pass them queue instance
         for i in range(nb_threads):
             t = Worker(self.queue)
-            t.setDaemon(False)
+            t.setDaemon(True)
             t.start()
 
 
-    def add(self, function,arg):
-        self.queue.put(Job(function, arg))
+    def add(self, arg):
+        self.queue.put(Job(self.function, arg))
 
-    def run(self)  :
-        self.queue.join()
-
+    def empty(self):
+        return self.queue.empty()
