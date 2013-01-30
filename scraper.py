@@ -7,7 +7,6 @@ from queue_tasks import QueueTasks
 import time
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
-from Entities import Base
 
 user_agent = 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:18.0) Gecko/20100101 Firefox/18.0'
 headers = {'User-Agent': user_agent}
@@ -101,9 +100,10 @@ def download_photo(params):
 def main():
     session = Session()
     #Base.metadata.drop_all(engine)
-    Base.metadata.create_all(engine)
+    #Base.metadata.create_all(engine)
     session.commit()
 
+    nouveautes = 0
     for page_num in range(1, 41):
         request = urllib2.Request(
             "http://www.leboncoin.fr/locations/offres/ile_de_france/?o=%d&mrs=600&mre=1200&ret=1&ret=2&location=Paris" % page_num,
@@ -129,6 +129,7 @@ def main():
                 print "Already seen"
                 nb_already_seen += 1
             else:
+                nouveautes += 1
                 appart_jobs.add(id)
 
         if nb_already_seen == nb_annonces:
@@ -141,7 +142,7 @@ def main():
     while not photo_jobs.empty():
         print "#####  Waiting for photos jobs"
         time.sleep(5)
-    print "Bye"
+    print "Bye, nouveautes %d" % nouveautes
 
 if __name__ == "__main__":
     engine = create_engine('mysql+mysqldb://root@localhost/lebonscrap?use_unicode=1', echo=True)
