@@ -8,19 +8,20 @@ class Appartement(Base):
     __tablename__ = 'appartements'
 
     id = Column(Integer, primary_key=True)
-    titre = Column(String)
+    titre = Column(String(100))
     loyer = Column(Integer)
-    ville = Column(String)
+    ville = Column(String(50))
     cp = Column(Integer)
     pieces = Column(Integer)
     meuble = Column(Boolean)
     surface = Column(Integer)
-    description = Column(String)
+    description = Column(String(5000))
     photos = relationship("Photo", order_by="Photo.id", backref="appartements")
-    date = Column(String)
-    auteur = Column(String)
+    date = Column(String(40))
+    auteur = Column(String(100))
 
-    def __init__(self, titre, loyer, ville, cp, pieces, meuble, surface, description, photos, date, auteur):
+    def __init__(self, id, titre, loyer, ville, cp, pieces, meuble, surface, description, photos, date, auteur):
+        self.id=id
         self.titre = unicode(titre)
         self.loyer = loyer
         self.ville = unicode(ville)
@@ -41,7 +42,7 @@ class Photo(Base):
     __tablename__ = 'photos'
 
     id = Column(Integer, primary_key=True)
-    file = Column(String, nullable=False)
+    file = Column(String(40), nullable=False)
     appartement_id = Column(Integer, ForeignKey('appartements.id'))
 
     appartement = relationship("Appartement", backref=backref('appartements', order_by=id))
