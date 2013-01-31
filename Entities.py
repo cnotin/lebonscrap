@@ -21,7 +21,7 @@ class Appartement(Base):
     meuble = Column(Boolean)
     surface = Column(Integer)
     description = Column(String(5000))
-    photos = relationship("Photo", order_by="Photo.id", backref="appartements")
+    photos = relationship("Photo", order_by="Photo.id", backref="appartement")
     date = Column(DateTime)
     auteur = Column(String(100))
 
@@ -53,8 +53,6 @@ class Photo(Base):
     id = Column(Integer, primary_key=True)
     file = Column(String(40), nullable=False)
     appartement_id = Column(Integer, ForeignKey('appartements.id'))
-
-    appartement = relationship("Appartement", backref=backref('appartements', order_by=id))
 
     def __init__(self, file):
         self.file = file.split('/')[-1]
