@@ -5,6 +5,7 @@ import re
 from Entities import Appartement
 from queue_tasks import QueueTasks
 import time
+import config
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 
@@ -145,7 +146,7 @@ def main():
     print "Bye, nouveautes %d" % nouveautes
 
 if __name__ == "__main__":
-    engine = create_engine('mysql+mysqldb://root@localhost/lebonscrap?use_unicode=1', echo=True)
+    engine = create_engine(config.SQLALCHEMY_DATABASE_URI, echo=True)
     session_factory = sessionmaker(bind=engine)
     Session = scoped_session(session_factory)
 

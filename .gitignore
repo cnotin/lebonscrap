@@ -1,3 +1,4 @@
 .*
 *.pyc
 /photos
+/secret.py
