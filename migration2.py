@@ -13,9 +13,8 @@ session = Session()
 
 print "loop"
 for appart in session.query(Appartement).all():
-    if not appart.datetime.month == 1:
-        appart.datetime = appart.datetime.replace(year=2012)
-        print appart.datetime
+    if not (appart.date.month == 1 or appart.date.month == 2):
+        appart.date = appart.date.replace(year=2012)
+        #print "%d %s" % (appart.id, appart.date)
 
 session.commit()
-
