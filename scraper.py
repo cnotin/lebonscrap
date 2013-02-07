@@ -90,7 +90,7 @@ def download_photo(params):
     request = urllib2.Request(url, headers=headers)
     try:
         response = urllib2.urlopen(request)
-        output = open("photos/" + url.split("/")[-1], 'wb')
+        output = open(config.PHOTO_DIR + url.split("/")[-1], 'wb')
         output.write(response.read())
         output.close()
     except urllib2.HTTPError, e:
