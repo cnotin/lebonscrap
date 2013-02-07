@@ -78,7 +78,7 @@ def download_annonce(id):
     Session.add(appart)
     Session.commit()
 
-    print titre
+    print "appartement id=%d"%id
     time.sleep(1)
 
 
