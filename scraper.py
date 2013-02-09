@@ -60,6 +60,8 @@ def download_annonce(id):
         surface_tag = params.find("th", text=re.compile("Surface"))
         if surface_tag:
             surface = int(re.sub(r'[^\d-]+', '', surface_tag.parent.td.contents[0]))
+            if surface < 15:
+                return
         else:
             surface = None
     except AttributeError as e:
