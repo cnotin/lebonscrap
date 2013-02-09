@@ -1,17 +1,21 @@
 # coding=utf-8
 import urllib2
-from bs4 import BeautifulSoup
 import re
-from Entities import Appartement
-from queue_tasks import QueueTasks
 import time
-import config
+
+from bs4 import BeautifulSoup
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
+
+from Entities import Appartement
+from queue_tasks import QueueTasks
+import config
+
 
 user_agent = 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:18.0) Gecko/20100101 Firefox/18.0'
 headers = {'User-Agent': user_agent}
 id_regexp = re.compile(r"locations/([0-9]*).htm")
+
 
 def get_id(url):
     return int(id_regexp.findall(url)[0])
@@ -129,7 +133,7 @@ def main():
 
                 #détecte page où il n'y a pas d'annonce
                 if url == u"http://www.leboncoin.fr//.htm?ca=12_s":
-                    break;
+                    break
                 id = get_id(url)
                 if session.query(Appartement).filter_by(id=id).first():
                     print "Already seen"
@@ -149,6 +153,7 @@ def main():
         print "#####  Waiting for photos jobs"
         time.sleep(5)
     print "Bye, nouveautes %d" % nouveautes
+
 
 if __name__ == "__main__":
     engine = create_engine(config.SQLALCHEMY_DATABASE_URI, echo=True)
