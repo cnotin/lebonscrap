@@ -110,11 +110,12 @@ def main():
 
     nouveautes = 0
 
-    for ville in ("Paris", "Neuilly-sur-Seine"):
+    for ville in ("Paris 75007", "Paris 75008", "Paris 75009", "Paris 75015", "Paris 75016", "Paris 75017", "Vanves",
+                  "Boulogne-Billancourt", "Issy-Les-Moulineaux", "Neuilly-sur-Seine"):
         for page_num in range(1, 41):
             request = urllib2.Request(
                 "http://www.leboncoin.fr/locations/offres/ile_de_france/?o=%d&mrs=600&mre=1200&ret=1&ret=2&location=%s" % (
-                page_num, ville), headers=headers)
+                    page_num, ville), headers=headers)
             response = urllib2.urlopen(request)
             the_page = response.read()
             pool = BeautifulSoup(the_page)
