@@ -64,6 +64,7 @@ def download_annonce(id):
         if surface_tag:
             surface = int(re.sub(r'[^\d-]+', '', surface_tag.parent.td.contents[0]))
             if surface < 15:
+                print "Annulation appart %d car surface %d" % (id, surface)
                 return
         else:
             surface = None
