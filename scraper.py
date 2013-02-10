@@ -6,6 +6,7 @@ import time
 from bs4 import BeautifulSoup
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.exc import IntegrityError
 
 from Entities import Appartement
 from queue_tasks import QueueTasks
@@ -22,6 +23,7 @@ def get_id(url):
 
 
 def download_annonce(id):
+    print "Download annonce %d" % id
     appart_url = "http://www.leboncoin.fr/locations/%d.htm" % id
 
     request = urllib2.Request(
@@ -81,10 +83,12 @@ def download_annonce(id):
         photo_jobs.add((photo, appart_url))
 
     appart = Appartement(id, titre, loyer, ville, cp, pieces, meuble, surface, description, photos, date, auteur)
-    Session.add(appart)
-    Session.commit()
+    try:
+        Session.add(appart)
+        Session.commit()
+    except IntegrityError:
+        print "Got integrity error while trying to add %d %s" % (id, appart)
 
-    print "appartement id=%d" % id
     time.sleep(1)
 
 
@@ -105,15 +109,12 @@ def download_photo(params):
 
 
 def main():
-    session = Session()
-    #Base.metadata.drop_all(engine)
-    #Base.metadata.create_all(engine)
-    session.commit()
-
     nouveautes = 0
 
-    for ville in ("Paris 75007", "Paris 75008", "Paris 75009", "Paris 75015", "Paris 75016", "Paris 75017", "Vanves",
+    for ville in ("Paris%2075007", "Paris%2075008", "Paris%2075009",
+                  "Paris%2075015", "Paris%2075016", "Paris%2075017", "Vanves",
                   "Boulogne-Billancourt", "Issy-Les-Moulineaux", "Neuilly-sur-Seine"):
+        print "Passage à la ville %s" % ville
         for page_num in range(1, 41):
             request = urllib2.Request(
                 "http://www.leboncoin.fr/locations/offres/ile_de_france/?o=%d&mrs=600&mre=1200&ret=1&ret=2&location=%s" % (
@@ -138,16 +139,18 @@ def main():
                 if url == u"http://www.leboncoin.fr//.htm?ca=12_s":
                     break
                 id = get_id(url)
-                if session.query(Appartement).filter_by(id=id).first():
-                    print "Already seen"
+                if Session.query(Appartement).filter_by(id=id).first():
+                    print "Already seen appart %d trouvé à %s" % (id, ville)
                     nb_already_seen += 1
                 else:
                     nouveautes += 1
+                    print "Ajout job appart %d trouvé à %s" % (id, ville)
                     appart_jobs.add(id)
 
             if nb_already_seen == nb_annonces:
                 break
 
+    print "Fin des villes, sleeping"
     time.sleep(5)
     while not appart_jobs.empty():
         print "#####  Waiting for appart jobs"
@@ -155,15 +158,15 @@ def main():
     while not photo_jobs.empty():
         print "#####  Waiting for photos jobs"
         time.sleep(5)
-    print "Bye, nouveautes %d" % nouveautes
+    print "Bye, nouveautes %d\n-----------------------------\n\n\n\n\n\n" % nouveautes
 
 
 if __name__ == "__main__":
-    engine = create_engine(config.SQLALCHEMY_DATABASE_URI, echo=True)
-    session_factory = sessionmaker(bind=engine)
-    Session = scoped_session(session_factory)
+    engine = create_engine(config.SQLALCHEMY_DATABASE_URI)
+    Session = scoped_session(sessionmaker(bind=engine))
 
     appart_jobs = QueueTasks(download_annonce)
     photo_jobs = QueueTasks(download_photo, nb_threads=5)
 
+    print "Hello"
     main()

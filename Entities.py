@@ -1,13 +1,17 @@
 # coding=utf-8
 
-from sqlalchemy import Column, ForeignKey, Integer, String, Boolean, DateTime
-from sqlalchemy.orm import relationship, backref
-from sqlalchemy.ext.declarative import declarative_base
-import time, locale
+import time
+import locale
 from datetime import datetime
+
+from sqlalchemy import Column, ForeignKey, Integer, String, Boolean, DateTime
+from sqlalchemy.orm import relationship
+from sqlalchemy.ext.declarative import declarative_base
+
 
 Base = declarative_base()
 locale.setlocale(locale.LC_ALL, "fr_FR.UTF-8")
+
 
 class Appartement(Base):
     __tablename__ = 'appartements'
@@ -39,8 +43,11 @@ class Appartement(Base):
         for photo in photos:
             self.photos.append(Photo(photo))
 
-        self.date = datetime.fromtimestamp(
-            time.mktime(time.strptime("2013 " + date.encode("utf-8"), u"%Y le %d %B à %H:%M".encode("utf-8"))))
+        try:
+            self.date = datetime.fromtimestamp(
+                time.mktime(time.strptime("2013 " + date.encode("utf-8"), u"%Y le %d %B à %H:%M".encode("utf-8"))))
+        except AttributeError:
+            print "AttributeError pour la date -%s-" % ("2013 " + date.encode("utf-8"))
         self.auteur = unicode(auteur)
 
     def __repr__(self):
