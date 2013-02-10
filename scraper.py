@@ -2,6 +2,7 @@
 import urllib2
 import re
 import time
+from datetime import datetime
 
 from bs4 import BeautifulSoup
 from sqlalchemy import create_engine
@@ -168,5 +169,5 @@ if __name__ == "__main__":
     appart_jobs = QueueTasks(download_annonce)
     photo_jobs = QueueTasks(download_photo, nb_threads=5)
 
-    print "Hello"
+    print "Hello @ %s" % datetime.now()
     main()
