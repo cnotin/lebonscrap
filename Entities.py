@@ -4,7 +4,7 @@ import time
 import locale
 from datetime import datetime
 
-from sqlalchemy import Column, ForeignKey, Integer, String, Boolean, DateTime
+from sqlalchemy import Column, ForeignKey, Integer, String, Boolean, DateTime, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -28,6 +28,7 @@ class Appartement(Base):
     photos = relationship("Photo", order_by="Photo.id", backref="appartement")
     date = Column(DateTime)
     auteur = Column(String(100))
+    source = Enum("leboncoin", "foncia")
 
     def __init__(self, id, titre, loyer, ville, cp, pieces, meuble, surface, description, photos, date, auteur):
         self.id = id
