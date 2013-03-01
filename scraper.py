@@ -23,7 +23,7 @@ def get_id(url):
     return int(id_regexp.findall(url)[0])
 
 
-def download_annonce(id):
+def download_annonce_leboncoin(id):
     print "Download annonce %d" % id
     appart_url = "http://www.leboncoin.fr/locations/%d.htm" % id
 
@@ -82,7 +82,7 @@ def download_annonce(id):
             # ya 1 photo
             photos = re.findall(r"(http://.*\.jpg)", image_tag["style"])
     for photo in photos:
-        photo_jobs.add((photo, appart_url))
+        photo_jobs.add(download_photo, (photo, appart_url))
 
     appart = Appartement(id, titre, loyer, ville, cp, pieces, meuble, surface, description, photos, date, auteur)
     try:
@@ -147,7 +147,7 @@ def main():
                 else:
                     nouveautes += 1
                     print "Ajout job appart %d trouvé à %s" % (id, ville)
-                    appart_jobs.add(id)
+                    appart_jobs.add(download_annonce_leboncoin, id)
 
             if nb_already_seen == nb_annonces:
                 break
@@ -155,10 +155,10 @@ def main():
     print "Fin des villes, sleeping"
     time.sleep(5)
     while not appart_jobs.empty():
-        print "#####  Waiting for appart jobs"
+        print "Waiting for appart jobs, still %d items" % appart_jobs.size()
         time.sleep(5)
     while not photo_jobs.empty():
-        print "#####  Waiting for photos jobs"
+        print "Waiting for photos jobs, still %d items" % photo_jobs.size()
         time.sleep(5)
     print "Bye, nouveautes %d\n-----------------------------\n\n\n\n\n\n" % nouveautes
 
@@ -167,8 +167,8 @@ if __name__ == "__main__":
     engine = create_engine(config.SQLALCHEMY_DATABASE_URI)
     Session = scoped_session(sessionmaker(bind=engine))
 
-    appart_jobs = QueueTasks(download_annonce)
-    photo_jobs = QueueTasks(download_photo, nb_threads=5)
+    appart_jobs = QueueTasks()
+    photo_jobs = QueueTasks(nb_threads=5)
 
     print "Hello @ %s" % datetime.now()
     main()

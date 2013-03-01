@@ -1,6 +1,7 @@
 import threading
 import Queue
 
+
 class Job():
     def __init__(self, function, arg):
         self.function = function
@@ -29,9 +30,8 @@ class Worker(threading.Thread):
 
 
 class QueueTasks():
-    def __init__(self, function, nb_threads=2):
+    def __init__(self, nb_threads=2):
         self.queue = Queue.Queue()
-        self.function = function
 
         #spawn a pool of threads, and pass them queue instance
         for i in range(nb_threads):
@@ -40,8 +40,11 @@ class QueueTasks():
             t.start()
 
 
-    def add(self, arg):
-        self.queue.put(Job(self.function, arg))
+    def add(self, fn, arg):
+        self.queue.put(Job(fn, arg))
 
     def empty(self):
         return self.queue.empty()
+
+    def size(self):
+        return self.queue.qsize()
