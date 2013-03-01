@@ -1,8 +1,6 @@
 # coding=utf-8
 
-import time
 import locale
-from datetime import datetime
 
 from sqlalchemy import Column, ForeignKey, Integer, String, Boolean, DateTime, Enum
 from sqlalchemy.orm import relationship
@@ -28,9 +26,9 @@ class Appartement(Base):
     photos = relationship("Photo", order_by="Photo.id", backref="appartement")
     date = Column(DateTime)
     auteur = Column(String(100))
-    source = Enum("leboncoin", "foncia")
+    source = Column(Enum("leboncoin", "foncia"))
 
-    def __init__(self, id, titre, loyer, ville, cp, pieces, meuble, surface, description, photos, date, auteur):
+    def __init__(self, id, titre, loyer, ville, cp, pieces, meuble, surface, description, photos, date, auteur, source):
         self.id = id
         self.titre = unicode(titre)
         self.loyer = loyer
@@ -40,16 +38,12 @@ class Appartement(Base):
         self.meuble = meuble
         self.surface = surface
         self.description = unicode(description)
+        self.date = date
+        self.auteur = unicode(auteur)
+        self.source = source
 
         for photo in photos:
             self.photos.append(Photo(photo))
-
-        try:
-            self.date = datetime.fromtimestamp(
-                time.mktime(time.strptime("2013 " + date.encode("utf-8"), u"%Y le %d %B à %H:%M".encode("utf-8"))))
-        except AttributeError:
-            print "AttributeError pour la date -%s-" % ("2013 " + date.encode("utf-8"))
-        self.auteur = unicode(auteur)
 
     def __repr__(self):
         return u"<Appartement %r>" % self.titre
