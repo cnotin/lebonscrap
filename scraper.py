@@ -231,7 +231,7 @@ def main():
             if nb_already_seen == nb_annonces:
                 break
 
-    print "Fin scraping leboncoin"
+    print "Fin scraping leboncoin, nouveautés %d" % nouveautes
 
     print "\nDébut scraping foncia"
     id_regexp = re.compile(r"bien_id=([0-9]*)&")
