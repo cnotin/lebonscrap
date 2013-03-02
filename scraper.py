@@ -244,7 +244,7 @@ def main():
             request = urllib2.Request(
                 "http://fr.foncia.com/annonces-immobilieres/location/resultat.php?metier=location"
                 "&origine_donnees=interne&formRecherche=true&typesDeBien[1]=on&typesDeBien[2]=on"
-                "&typesDeBien[5]=on&nbPieces[0]=on&surfaceMin=15&surfaceMax=&localisation=%s"
+                "&typesDeBien[5]=on&nbPieces[0]=on&surfaceMin=20&surfaceMax=&localisation=%s"
                 "&loyerMin=600&loyerMax=1200&page=%d" % (ville, page_num), headers=headers)
             response = urllib2.urlopen(request)
             the_page = response.read()
