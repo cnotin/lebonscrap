@@ -66,9 +66,6 @@ def download_annonce_leboncoin(id):
         surface_tag = params.find("th", text=re.compile("Surface"))
         if surface_tag:
             surface = int(re.sub(r'[^\d-]+', '', surface_tag.parent.td.contents[0]))
-            if surface < 15:
-                print "Annulation appart %d car surface %d" % (id, surface)
-                return
         else:
             surface = None
     except AttributeError:
@@ -201,7 +198,7 @@ def main():
         print "Passage à la ville %s" % ville
         for page_num in range(1, 41):
             request = urllib2.Request(
-                "http://www.leboncoin.fr/locations/offres/ile_de_france/?o=%d&mrs=600&mre=1200&ret=1&ret=2&location=%s" % (
+                "http://www.leboncoin.fr/locations/offres/ile_de_france/?o=%d&mrs=600&mre=1200&ret=1&ret=2&sqs=1&location=%s" % (
                     page_num, ville), headers=headers)
             response = urllib2.urlopen(request)
             the_page = response.read()
