@@ -39,8 +39,7 @@ def download_annonce_leboncoin(id):
                                       date.encode("utf-8"),
                                       u"%Y le %d %B à %H:%M".encode("utf-8"))))
     except AttributeError:
-        print "AttributeError pour la date -%s-, skipping appart" % ("2013 " + date.encode("utf-8"))
-        return
+        date = datetime.now()
 
     params = pool.find("div", {"class": "lbcParams"})
     loyer = int(re.sub(r'[^\d-]+', '', params.find("span", {"class": "price"}).string[:-2]))
