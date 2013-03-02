@@ -236,7 +236,6 @@ def main():
     print "\nDébut scraping foncia"
     id_regexp = re.compile(r"bien_id=([0-9]*)&")
 
-    # for ville in ("Paris",):
     for ville in villes:
         print "Passage à la ville %s" % ville
         for page_num in range(1, 41):
