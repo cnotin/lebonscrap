@@ -186,7 +186,7 @@ def download_photo(params):
 
 def main():
     villes = (
-        "Paris%2075007", "Paris%2075008", "Paris%2075009", "Paris%2075015", "Paris%2075016", "Paris%2075017", "Vanves",
+        "Paris%2075007", "Paris%2075008", "Paris%2075009", "Paris%2075015", "Paris%2075016", "Paris%2075017",
         "Boulogne-Billancourt", "Issy-Les-Moulineaux", "Neuilly-sur-Seine%2092200")
 
     nouveautes = 0
