@@ -356,6 +356,8 @@ def main():
 
             if nb_already_seen == nb_annonces:
                 break
+            
+    print "Fin scraping foncia, nouveautés %d" % nouveautes
 
     print "\nDébut scraping seloger"
     id_regexp = re.compile(r"/([0-9]*).htm")
