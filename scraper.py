@@ -245,7 +245,7 @@ def download_annonce_seloger((id, appart_url)):
     except IntegrityError:
         print "Got integrity error while trying to add %d %s" % (id, appart)
 
-    time.sleep(1)
+    time.sleep(2)
 
 
 def download_photo(params):
