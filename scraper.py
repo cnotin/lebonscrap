@@ -14,8 +14,23 @@ from queue_tasks import QueueTasks
 import config
 
 
-user_agent = 'Mozilla/5.0 (X11; Ubuntu; Linux x86_32; rv:18.0) Gecko/20100101 Firefox/19.0'
+user_agent = 'Mozilla/5.0 (X11; Linux x86_64; rv:17.0) Gecko/20100101 Firefox/17.0'
 headers = {'User-Agent': user_agent}
+
+
+def normalize_ville(ville):
+    if u"paris" in ville:
+        ville = u"Paris"
+    elif u"billancourt" in ville:
+        ville = u"Boulogne-Billancourt"
+    elif u"issy" in ville:
+        ville = u"Issy-les-Moulineaux"
+    elif u"neuilly" in ville:
+        ville = u"Neuilly-sur-Seine"
+    elif u"vanves" in ville:
+        ville = u"Vanves"
+
+    return ville
 
 
 def download_annonce_leboncoin(id):
@@ -84,7 +99,7 @@ def download_annonce_leboncoin(id):
         photo_jobs.add(download_photo, (photo, appart_url))
 
     appart = Appartement(id, titre, loyer, ville, cp, pieces, meuble, surface, description, photos, date, auteur,
-                         "leboncoin")
+                         "leboncoin", appart_url)
     try:
         Session.add(appart)
         Session.commit()
@@ -114,17 +129,7 @@ def download_annonce_foncia(id):
     titre_exploded = titre.split("-")
     cp = int(titre_exploded[-1])
 
-    ville = titre_exploded[-2].strip().lower()
-    if u"paris" in ville:
-        ville = u"Paris"
-    elif ville in (u"boulogne billancourt", u"boulogne-billancourt"):
-        ville = u"Boulogne-Billancourt"
-    elif ville == u"issy les moulineaux":
-        ville = u"Issy-les-Moulineaux"
-    elif u"neuilly" in ville:
-        ville = u"Neuilly-sur-Seine"
-    elif ville == "vanves":
-        ville = u"Vanves"
+    ville = normalize_ville(titre_exploded[-2].strip().lower())
 
     desc_tag = pool.find("div", {"class": "foncia_textepub_detail_loc"})
     txt = ""
@@ -157,7 +162,83 @@ def download_annonce_foncia(id):
         photo_jobs.add(download_photo, (photo, appart_url))
 
     appart = Appartement(id, titre, loyer, ville, cp, pieces, meuble, surface, description, photos, date, auteur,
-                         "foncia")
+                         "foncia", appart_url)
+    try:
+        Session.add(appart)
+        Session.commit()
+    except IntegrityError:
+        print "Got integrity error while trying to add %d %s" % (id, appart)
+
+    time.sleep(1)
+
+
+def download_annonce_seloger((id, appart_url)):
+    print "Download annonce %d" % id
+
+    request = urllib2.Request(appart_url, headers=headers)
+    response = urllib2.urlopen(request)
+    the_page = response.read()
+    pool = BeautifulSoup(the_page)
+
+    titre = pool.find("title").string.replace("Location", "")[:-13]
+
+    auteur = pool.find("div", {"id": "infos_agence"}).h3.string.replace("Informations sur l'agence", "")
+
+    date = unicode(pool.select(".maj_ref span.maj b")[0].string)
+    try:
+        date = datetime.fromtimestamp(
+            time.mktime(time.strptime(date.encode("utf-8"), u"%d / %m / %Y".encode("utf-8"))))
+    except (AttributeError, ValueError), e:
+        print "Exception --%s--, use current date instead of %s" % (e, date)
+        date = datetime.now()
+
+    loyer = int(re.sub(r'[^\d-]+', '', pool.find("b", {"class": "prix_brut"}).text))
+
+    cp = int(re.findall(r"\(([0-9]*)\)", titre)[0])
+
+    ville = normalize_ville(titre.strip().lower())
+
+    txt = pool.find_all("p", {"class": "textdesc"})[0].string
+    desc_tag = pool.find("div", {"class": "infos_ann_light"})
+
+    try:
+        etage = desc_tag.find_all("li")[2].find_next().text.strip()
+    except AttributeError:
+        etage = u"N/A"
+
+    misc = ""
+    try:
+        misc_li = pool.find("ol", {"id": "mentions_ann"}).find_all("li")
+        for m in misc_li:
+            t = m.text
+            if u"Disponible" in t or u"Meublé" in t:
+                misc += u"<li>%s</li>" % t
+    except AttributeError:
+        pass
+    if misc != "":
+        misc = "<p>Divers :<ul>%s</ul></p>" % misc
+    description = u"<div><p>%s</p><p>Etage : %s</p>%s</div>" % (txt, etage, misc)
+
+    try:
+        pieces = int(desc_tag.find_all("li")[0].find_next().text.strip())
+    except IndexError:
+        pieces = None
+
+    try:
+        surface = int(desc_tag.find_all("li")[1].find_next().text.strip()[:-4].strip().split(",")[0])
+    except (IndexError, ValueError):
+        surface = None
+
+    meuble = None
+
+    # cette méthode choppe les photos du carrousel. Avec potentiellement des photos big et small mélangées.
+    gallerie = re.findall(r"""(tabGalerie.*?)</script>""", the_page, re.DOTALL)[0]
+    photos = re.findall(r"'(http://..visuels.poliris.com/.*?)'", gallerie, re.DOTALL)
+    for photo in photos:
+        photo_jobs.add(download_photo, (photo, appart_url))
+
+    appart = Appartement(id, titre, loyer, ville, cp, pieces, meuble, surface, description, photos, date, auteur,
+                         "seloger", appart_url)
     try:
         Session.add(appart)
         Session.commit()
@@ -184,9 +265,9 @@ def download_photo(params):
 
 
 def main():
-    villes = (
-        "Paris%2075007", "Paris%2075008", "Paris%2075009", "Paris%2075015", "Paris%2075016", "Paris%2075017",
-        "Boulogne-Billancourt", "Issy-Les-Moulineaux", "Neuilly-sur-Seine%2092200")
+    villes = ("Paris%2075007", "Paris%2075008", "Paris%2075009", "Paris%2075015", "Paris%2075016", "Paris%2075017",
+              "Boulogne-Billancourt", "Issy-Les-Moulineaux", "Neuilly-sur-Seine%2092200")
+    villes_seloger = ("750107", "750108", "750109", "750115", "750116", "750117", "920012", "920040", "920051")
 
     nouveautes = 0
 
@@ -197,8 +278,8 @@ def main():
         print "Passage à la ville %s" % ville
         for page_num in range(1, 41):
             request = urllib2.Request(
-                "http://www.leboncoin.fr/locations/offres/ile_de_france/?o=%d&mrs=600&mre=1200&ret=1&ret=2&sqs=1&location=%s" % (
-                    page_num, ville), headers=headers)
+                "http://www.leboncoin.fr/locations/offres/ile_de_france/"
+                "?o=%d&mrs=600&mre=1200&ret=1&ret=2&sqs=1&location=%s" % (page_num, ville), headers=headers)
             response = urllib2.urlopen(request)
             the_page = response.read()
             pool = BeautifulSoup(the_page)
@@ -276,6 +357,48 @@ def main():
             if nb_already_seen == nb_annonces:
                 break
 
+    print "\nDébut scraping seloger"
+    id_regexp = re.compile(r"/([0-9]*).htm")
+
+    for ville in villes_seloger:
+        print "Passage à la ville %s" % ville
+        for page_num in range(1, 10):
+
+            request = urllib2.Request(
+                "http://www.seloger.com/recherche.htm?ci=%s&idqfix=1&idtt=1&idtypebien=1,2&org=engine"
+                "&px_loyerbtw=600/1200&surfacebtw=20/NAN&BCLANNpg=%d" % (ville, page_num), headers=headers)
+            response = urllib2.urlopen(request)
+            the_page = response.read()
+            pool = BeautifulSoup(the_page)
+
+            annonces = pool.select("div#results_container div.rech_libinfo a")
+
+            # empty page
+            if len(annonces) == 0:
+                break
+
+            # quand qqn ajoute une annonce, il se peut que l'on ait déjà vu le première annonce de la page dans
+            # la page précédente. Ce n'est donc pas un moyen sûr pour détecter la fin des nouveautés. On vérifie donc
+            # plutôt qu'on a déjà vu tous les appart de la page.
+            nb_already_seen = 0
+            nb_annonces = 0
+            for annonce in annonces:
+                nb_annonces += 1
+
+                url = annonce["href"].split("?")[0]
+
+                id = int(id_regexp.findall(url)[0])
+                if Session.query(Appartement).filter_by(id=id).first():
+                    print "Already seen appart %d trouvé à %s" % (id, ville)
+                    nb_already_seen += 1
+                else:
+                    nouveautes += 1
+                    print "Ajout job appart %d trouvé à %s" % (id, ville)
+                    appart_jobs.add(download_annonce_seloger, (id, url))
+
+            if nb_already_seen == nb_annonces:
+                break
+
     print "Fin des villes, sleeping"
     time.sleep(5)
     while not appart_jobs.empty():
@@ -291,7 +414,7 @@ if __name__ == "__main__":
     engine = create_engine(config.SQLALCHEMY_DATABASE_URI)
     Session = scoped_session(sessionmaker(bind=engine))
 
-    appart_jobs = QueueTasks()
+    appart_jobs = QueueTasks(nb_threads=2)
     photo_jobs = QueueTasks()
 
     print "Hello @ %s" % datetime.now()

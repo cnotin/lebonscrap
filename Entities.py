@@ -15,7 +15,7 @@ class Appartement(Base):
     __tablename__ = 'appartements'
 
     id = Column(Integer, primary_key=True)
-    titre = Column(String(100))
+    titre = Column(String(200))
     loyer = Column(Integer)
     ville = Column(String(50))
     cp = Column(Integer)
@@ -26,9 +26,11 @@ class Appartement(Base):
     photos = relationship("Photo", order_by="Photo.id", backref="appartement")
     date = Column(DateTime)
     auteur = Column(String(100))
-    source = Column(Enum("leboncoin", "foncia"))
+    source = Column(Enum("leboncoin", "foncia", "seloger"))
+    url = Column(String(200))
 
-    def __init__(self, id, titre, loyer, ville, cp, pieces, meuble, surface, description, photos, date, auteur, source):
+    def __init__(self, id, titre, loyer, ville, cp, pieces, meuble, surface, description, photos, date, auteur, source,
+                 url):
         self.id = id
         self.titre = unicode(titre)
         self.loyer = loyer
@@ -41,6 +43,7 @@ class Appartement(Base):
         self.date = date
         self.auteur = unicode(auteur)
         self.source = source
+        self.url = url
 
         for photo in photos:
             self.photos.append(Photo(photo))
