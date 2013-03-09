@@ -292,7 +292,7 @@ if __name__ == "__main__":
     Session = scoped_session(sessionmaker(bind=engine))
 
     appart_jobs = QueueTasks()
-    photo_jobs = QueueTasks(nb_threads=5)
+    photo_jobs = QueueTasks()
 
     print "Hello @ %s" % datetime.now()
     main()

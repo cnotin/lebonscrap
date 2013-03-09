@@ -30,7 +30,7 @@ class Worker(threading.Thread):
 
 
 class QueueTasks():
-    def __init__(self, nb_threads=2):
+    def __init__(self, nb_threads=5):
         self.queue = Queue.Queue()
 
         #spawn a pool of threads, and pass them queue instance
