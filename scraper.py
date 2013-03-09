@@ -43,11 +43,14 @@ def download_annonce_leboncoin(id):
     the_page = response.read()
     pool = BeautifulSoup(the_page)
 
-    titre = pool.find("div", {"class": "header_adview"}).find("h2").string
-
     upload_by = pool.find("div", {"class": "upload_by"})
     auteur = upload_by.find("a").string
+    if auteur == " ancea ":
+        return
     date = unicode(upload_by.contents[2].string).strip()[:-1]
+
+    titre = pool.find("div", {"class": "header_adview"}).find("h2").string
+
     try:
         date = datetime.fromtimestamp(
             time.mktime(time.strptime("2013 " +
