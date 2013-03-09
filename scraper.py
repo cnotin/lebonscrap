@@ -21,7 +21,7 @@ headers = {'User-Agent': user_agent}
 def normalize_ville(ville):
     if u"paris" in ville:
         ville = u"Paris"
-    elif u"billancourt" in ville:
+    elif u"boulogne" in ville or u"billancourt" in ville:
         ville = u"Boulogne-Billancourt"
     elif u"issy" in ville:
         ville = u"Issy-les-Moulineaux"
