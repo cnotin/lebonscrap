@@ -195,7 +195,7 @@ def download_annonce_seloger((id, appart_url)):
         print "Exception --%s--, use current date instead of %s" % (e, date)
         date = datetime.now()
 
-    loyer = int(re.sub(r'[^\d-]+', '', pool.find("b", {"class": "prix_brut"}).text))
+    loyer = int(re.sub(r'[^\d-]+', '', pool.find("b", {"class": "prix_brut"}).text.split(",")[0]))
 
     cp = int(re.findall(r"\(([0-9]*)\)", titre)[0])
 
