@@ -34,6 +34,8 @@ def normalize_ville(ville):
 
 
 def download_annonce_leboncoin(id):
+    global poubelle
+
     print "Download annonce %d" % id
     appart_url = "http://www.leboncoin.fr/locations/%d.htm" % id
 
@@ -46,6 +48,7 @@ def download_annonce_leboncoin(id):
     upload_by = pool.find("div", {"class": "upload_by"})
     auteur = upload_by.find("a").string
     if auteur == " ancea ":
+        poubelle += 1
         return
     date = unicode(upload_by.contents[2].string).strip()[:-1]
 
@@ -272,7 +275,8 @@ def main():
               "Boulogne-Billancourt", "Issy-Les-Moulineaux", "Neuilly-sur-Seine%2092200")
     villes_seloger = ("750107", "750108", "750109", "750115", "750116", "750117", "920012", "920040", "920051")
 
-    nouveautes = 0
+    global nouveautes
+    global poubelle
 
     print "Début scraping leboncoin"
     id_regexp = re.compile(r"locations/([0-9]*).htm")
@@ -359,7 +363,7 @@ def main():
 
             if nb_already_seen == nb_annonces:
                 break
-            
+
     print "Fin scraping foncia, nouveautés %d" % nouveautes
 
     print "\nDébut scraping seloger"
@@ -412,7 +416,7 @@ def main():
     while not photo_jobs.empty():
         print "Waiting for photos jobs, still %d items" % photo_jobs.size()
         time.sleep(5)
-    print "Bye, nouveautes %d\n-----------------------------\n\n\n\n\n\n" % nouveautes
+    print "Bye, nouveautes %d et poubelle %d\n-----------------------------\n\n\n\n\n\n" % (nouveautes, poubelle)
 
 
 if __name__ == "__main__":
@@ -421,6 +425,9 @@ if __name__ == "__main__":
 
     appart_jobs = QueueTasks(nb_threads=2)
     photo_jobs = QueueTasks()
+
+    nouveautes = 0
+    poubelle = 0
 
     print "Hello @ %s" % datetime.now()
     main()
