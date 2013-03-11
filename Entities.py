@@ -28,6 +28,7 @@ class Appartement(Base):
     auteur = Column(String(100))
     source = Column(Enum("leboncoin", "foncia", "seloger"))
     url = Column(String(200))
+    sent_email = Column(Boolean)
 
     def __init__(self, id, titre, loyer, ville, cp, pieces, meuble, surface, description, photos, date, auteur, source,
                  url):
@@ -44,6 +45,7 @@ class Appartement(Base):
         self.auteur = unicode(auteur)
         self.source = source
         self.url = url
+        self.sent_email = False
 
         for photo in photos:
             self.photos.append(Photo(photo))
