@@ -2,7 +2,7 @@
 import urllib2
 import re
 import time
-from datetime import datetime
+from datetime import datetime, date
 
 from bs4 import BeautifulSoup
 from sqlalchemy import create_engine
@@ -190,13 +190,15 @@ def download_annonce_seloger((id, appart_url)):
 
     auteur = pool.find("div", {"id": "infos_agence"}).h3.string.replace("Informations sur l'agence", "")
 
-    date = unicode(pool.select(".maj_ref span.maj b")[0].string)
+    date_annonce = unicode(pool.select(".maj_ref span.maj b")[0].string)
     try:
-        date = datetime.fromtimestamp(
-            time.mktime(time.strptime(date.encode("utf-8"), u"%d / %m / %Y".encode("utf-8"))))
+        date_annonce = datetime.combine(
+            date.fromtimestamp(
+                time.mktime(time.strptime(date_annonce.encode("utf-8"), u"%d / %m / %Y".encode("utf-8")))),
+            datetime.now().timetz())
     except (AttributeError, ValueError), e:
-        print "Exception --%s--, use current date instead of %s" % (e, date)
-        date = datetime.now()
+        print "Exception --%s--, use current date_annonce instead of %s" % (e, date_annonce)
+        date_annonce = datetime.now()
 
     loyer = int(re.sub(r'[^\d-]+', '', pool.find("b", {"class": "prix_brut"}).text.split(",")[0]))
 
@@ -243,7 +245,8 @@ def download_annonce_seloger((id, appart_url)):
     for photo in photos:
         photo_jobs.add(download_photo, (photo, appart_url))
 
-    appart = Appartement(id, titre, loyer, ville, cp, pieces, meuble, surface, description, photos, date, auteur,
+    appart = Appartement(id, titre, loyer, ville, cp, pieces, meuble, surface, description, photos, date_annonce,
+                         auteur,
                          "seloger", appart_url)
     try:
         Session.add(appart)
