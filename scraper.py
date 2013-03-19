@@ -47,7 +47,7 @@ def download_annonce_leboncoin(id):
 
     upload_by = pool.find("div", {"class": "upload_by"})
     auteur = upload_by.find("a").string
-    if auteur == " ancea ":
+    if auteur == " ancea " or auteur == " bonapart immobilier ":
         poubelle += 1
         return
     date = unicode(upload_by.contents[2].string).strip()[:-1]
