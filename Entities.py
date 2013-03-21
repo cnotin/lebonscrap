@@ -26,7 +26,7 @@ class Appartement(Base):
     photos = relationship("Photo", order_by="Photo.id", backref="appartement")
     date = Column(DateTime)
     auteur = Column(String(100))
-    source = Column(Enum("leboncoin", "foncia", "seloger"))
+    source = Column(Enum("leboncoin", "foncia", "seloger", "pap"))
     url = Column(String(200))
     sent_email = Column(Boolean)
 

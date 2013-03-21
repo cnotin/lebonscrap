@@ -9,7 +9,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.exc import IntegrityError
 
-from Entities import Appartement
+from Entities import Appartement, Base
 from queue_tasks import QueueTasks
 import config
 
@@ -257,6 +257,85 @@ def download_annonce_seloger((id, appart_url)):
     time.sleep(2)
 
 
+def download_annonce_pap((id, appart_url)):
+    print "Download annonce %d" % id
+
+    request = urllib2.Request(appart_url, headers=headers)
+    response = urllib2.urlopen(request)
+    the_page = response.read()
+    pool = BeautifulSoup(the_page)
+
+    titre = pool.find("div", {"id": "annonce_detail"}).h1.string.split(" - ")
+    loyer = int(re.sub(r'[^\d-]+', '', titre[1]))
+    titre = titre[0]
+
+    bold_elements = pool.select(".annonce-detail-texte b")
+    try:
+        auteur = bold_elements[1].string
+    except IndexError:
+        auteur = None
+    cp = bold_elements[0].string
+    if "7e" in cp:
+        cp = 75007
+    elif "8e" in cp:
+        cp = 75008
+    elif "9e" in cp:
+        cp = 75009
+    elif "15e" in cp:
+        cp = 75015
+    elif "16e" in cp:
+        cp = 75016
+    elif "17e" in cp:
+        cp = 75017
+    else:
+        cp = re.search("\((\d+)\)", bold_elements[0].string)
+        if cp:
+            cp = int(cp.group(1))
+        else:
+            print "Erreur de cp -%s-" % bold_elements[0].string
+            cp = -1
+
+    date_annonce = datetime.now()
+
+    ville = normalize_ville(titre.strip().lower())
+
+    description = pool.find("p", {"class": "annonce-detail-texte"}).text
+    try:
+        description += "<p>Transports : %s</p>" % pool.find("p", {"class": "metro"}).text
+    except AttributeError:
+        pass
+
+    surface = re.search(u"(\d+)\xa0m", description)
+    if surface:
+        surface = int(surface.group(1))
+
+    pieces = re.search("(\d+) pi\xe8ce", description)
+    if pieces:
+        pieces = int(pieces.group(1))
+
+    if "meubl" in titre:
+        meuble = True
+    else:
+        meuble = None
+
+    # cette méthode choppe les photos du carrousel. Avec potentiellement des photos big et small mélangées.
+    gallerie = unicode(pool.find("table", {"id": "galerie-photo"}))
+    photos = re.findall(r'href="(http://static.pap.fr/photos/.*?)"', gallerie, re.DOTALL)
+    for photo in photos:
+        photo_jobs.add(download_photo, (photo, appart_url))
+
+    appart = Appartement(id, titre, loyer, ville, cp, pieces, meuble, surface, description, photos, date_annonce,
+                         auteur,
+                         "pap", appart_url)
+    try:
+        Session.add(appart)
+        Session.commit()
+    except IntegrityError:
+        print "Got integrity error while trying to add %d %s" % (id, appart)
+
+    time.sleep(2)
+
+
 def download_photo(params):
     url = params[0]
     origin = params[1]
@@ -411,6 +490,49 @@ def main():
             if nb_already_seen == nb_annonces:
                 break
 
+    print "Fin scraping seloger, nouveautés %d" % nouveautes
+
+    print "\nDébut scraping PAP"
+    id_regexp = re.compile(r"-r([0-9]*)$")
+    for page_num in range(1, 20):
+        request = urllib2.Request(
+            "http://www.pap.fr/annonce/locations-paris-07e-"
+            "g37774g37775g37776g37782g37783g37784g43267g43270g43282-"
+            "entre-600-et-1200-euros-entre-20-et-100-m2-%d" % page_num, headers=headers)
+        response = urllib2.urlopen(request)
+        the_page = response.read()
+        pool = BeautifulSoup(the_page, "html.parser")
+
+        annonces = pool.select("#body-left li.detail a")
+
+        # empty page
+        if len(annonces) == 0:
+            break
+
+        # quand qqn ajoute une annonce, il se peut que l'on ait déjà vu le première annonce de la page dans
+        # la page précédente. Ce n'est donc pas un moyen sûr pour détecter la fin des nouveautés. On vérifie donc
+        # plutôt qu'on a déjà vu tous les appart de la page.
+        nb_already_seen = 0
+        nb_annonces = 0
+        for annonce in annonces:
+            nb_annonces += 1
+
+            url = "http://www.pap.fr/%s" % annonce["href"]
+
+            id = int(id_regexp.findall(url)[0])
+            if Session.query(Appartement).filter_by(id=id).first():
+                print "Already seen appart %d" % id
+                nb_already_seen += 1
+            else:
+                nouveautes += 1
+                print "Ajout job appart %d" % id
+                appart_jobs.add(download_annonce_pap, (id, url))
+
+        if nb_already_seen == nb_annonces:
+            break
+
+    print "Fin scraping PAP, nouveautés %d" % nouveautes
+
     print "Fin des villes, sleeping"
     time.sleep(5)
     while not appart_jobs.empty():
@@ -425,6 +547,7 @@ def main():
 if __name__ == "__main__":
     engine = create_engine(config.SQLALCHEMY_DATABASE_URI)
     Session = scoped_session(sessionmaker(bind=engine))
+    Base.metadata.create_all(engine)
 
     appart_jobs = QueueTasks(nb_threads=2)
     photo_jobs = QueueTasks()
