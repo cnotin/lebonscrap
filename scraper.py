@@ -305,15 +305,28 @@ def download_annonce_pap((id, appart_url)):
     except AttributeError:
         pass
 
-    surface = re.search(u"(\d+)\xa0m", description)
-    if surface:
-        surface = int(surface.group(1))
+    surface = None
+    surface_tmp = re.search(u"(\d+)\xa0m", titre)
+    if surface_tmp:
+        surface = int(surface_tmp.group(1))
+    else:
+        surface_tmp = re.search(u"(\d+)\xa0m", description)
+        if surface_tmp:
+            surface = int(surface_tmp.group(1))
 
-    pieces = re.search("(\d+) pi\xe8ce", description)
-    if pieces:
-        pieces = int(pieces.group(1))
+    pieces = None
+    pieces_tmp = re.search(u"(\d+).pi.ce", titre, re.IGNORECASE)
+    if pieces_tmp:
+        pieces = int(pieces_tmp.group(1))
+    else:
+        pieces_tmp = re.search(u"(\d+).pi.ce", description, re.IGNORECASE)
+        if pieces_tmp:
+            pieces = int(pieces_tmp.group(1))
+        else:
+            if re.search("studio", titre, re.IGNORECASE):
+                pieces = 1
 
-    if "meubl" in titre:
+    if re.search("meubl", titre, re.IGNORECASE):
         meuble = True
     else:
         meuble = None
