@@ -501,7 +501,7 @@ def main():
             "entre-600-et-1200-euros-entre-20-et-100-m2-%d" % page_num, headers=headers)
         response = urllib2.urlopen(request)
         the_page = response.read()
-        pool = BeautifulSoup(the_page, "html.parser")
+        pool = BeautifulSoup(the_page)
 
         annonces = pool.select("#body-left li.detail a")
 
