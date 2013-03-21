@@ -507,43 +507,47 @@ def main():
 
     print "\nDébut scraping PAP"
     id_regexp = re.compile(r"-r([0-9]*)$")
-    for page_num in range(1, 20):
-        request = urllib2.Request(
-            "http://www.pap.fr/annonce/locations-paris-07e-"
-            "g37774g37775g37776g37782g37783g37784g43267g43270g43282-"
-            "entre-600-et-1200-euros-entre-20-et-100-m2-%d" % page_num, headers=headers)
-        response = urllib2.urlopen(request)
-        the_page = response.read()
-        pool = BeautifulSoup(the_page)
 
-        annonces = pool.select("#body-left li.detail a")
+    try:
+        for page_num in range(1, 20):
+            request = urllib2.Request(
+                "http://www.pap.fr/annonce/locations-paris-07e-"
+                "g37774g37775g37776g37782g37783g37784g43267g43270g43282-"
+                "entre-600-et-1200-euros-entre-20-et-100-m2-%d" % page_num, headers=headers)
 
-        # empty page
-        if len(annonces) == 0:
-            break
+            response = urllib2.urlopen(request, timeout=10)
+            the_page = response.read()
+            pool = BeautifulSoup(the_page)
 
-        # quand qqn ajoute une annonce, il se peut que l'on ait déjà vu le première annonce de la page dans
-        # la page précédente. Ce n'est donc pas un moyen sûr pour détecter la fin des nouveautés. On vérifie donc
-        # plutôt qu'on a déjà vu tous les appart de la page.
-        nb_already_seen = 0
-        nb_annonces = 0
-        for annonce in annonces:
-            nb_annonces += 1
+            annonces = pool.select("#body-left li.detail a")
 
-            url = "http://www.pap.fr/%s" % annonce["href"]
+            # empty page
+            if len(annonces) == 0:
+                break
 
-            id = int(id_regexp.findall(url)[0])
-            if Session.query(Appartement).filter_by(id=id).first():
-                print "Already seen appart %d" % id
-                nb_already_seen += 1
-            else:
-                nouveautes += 1
-                print "Ajout job appart %d" % id
-                appart_jobs.add(download_annonce_pap, (id, url))
+            # quand qqn ajoute une annonce, il se peut que l'on ait déjà vu le première annonce de la page dans
+            # la page précédente. Ce n'est donc pas un moyen sûr pour détecter la fin des nouveautés. On vérifie donc
+            # plutôt qu'on a déjà vu tous les appart de la page.
+            nb_already_seen = 0
+            nb_annonces = 0
+            for annonce in annonces:
+                nb_annonces += 1
 
-        if nb_already_seen == nb_annonces:
-            break
+                url = "http://www.pap.fr/%s" % annonce["href"]
 
+                id = int(id_regexp.findall(url)[0])
+                if Session.query(Appartement).filter_by(id=id).first():
+                    print "Already seen appart %d" % id
+                    nb_already_seen += 1
+                else:
+                    nouveautes += 1
+                    print "Ajout job appart %d" % id
+                    appart_jobs.add(download_annonce_pap, (id, url))
+
+            if nb_already_seen == nb_annonces:
+                break
+    except urllib2.HTTPError, e:
+        print "PAP download problem, got %s" % e
     print "Fin scraping PAP, nouveautés %d" % nouveautes
 
     print "Fin des villes, sleeping"
