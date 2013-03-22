@@ -275,18 +275,18 @@ def download_annonce_pap((id, appart_url)):
     except IndexError:
         auteur = None
     cp = bold_elements[0].string
-    if "7e" in cp:
-        cp = 75007
-    elif "8e" in cp:
-        cp = 75008
-    elif "9e" in cp:
-        cp = 75009
-    elif "15e" in cp:
+    if "15e" in cp:
         cp = 75015
     elif "16e" in cp:
         cp = 75016
     elif "17e" in cp:
         cp = 75017
+    elif "7e" in cp:
+        cp = 75007
+    elif "8e" in cp:
+        cp = 75008
+    elif "9e" in cp:
+        cp = 75009
     else:
         cp = re.search("\((\d+)\)", bold_elements[0].string)
         if cp:
