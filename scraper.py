@@ -471,7 +471,7 @@ def main():
 
             request = urllib2.Request(
                 "http://www.seloger.com/recherche.htm?ci=%s&idqfix=1&idtt=1&idtypebien=1,2&org=engine"
-                "&px_loyerbtw=600/1200&surfacebtw=20/NAN&BCLANNpg=%d" % (ville, page_num), headers=headers)
+                "&px_loyerbtw=600/1200&surfacebtw=20/NAN&BCLANNpg=%d&tri=d_dt_crea" % (ville, page_num), headers=headers)
             response = urllib2.urlopen(request)
             the_page = response.read()
             pool = BeautifulSoup(the_page)
